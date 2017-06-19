@@ -1,0 +1,247 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Untitled</title>
+    <link rel="stylesheet" href="./main.css">
+    <link rel="author" href="humans.txt">
+    <script src="./player-api.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="player-container">
+        <div class="sc-player">
+          <a class="player__link" target="_blank">
+            <img class="player__image" src="">
+          </a>
+          <div class="player__details">
+            <h3 class="player__artist"></h3>
+            <p class="player__track"></p>
+          </div>
+          <div class="player__controls">
+            <!-- play/pause button -->
+            <button class="player__btn player__btn--play js-play paused">
+              <svg xmlns="http://www.w3.org/2000/svg" class="outer-circle" width="50" height="50" viewBox="0 0 50 50"><g fill="none" fill-rule="evenodd" stroke="#FFFFFF" stroke-width="2" transform="translate(1 1)"><path d="M0,24a24,24 0 1,0 48,0a24,24 0 1,0 -48,0" stroke-opacity=".25"/><path class="progress-circle" d="M0,24a24,24 0 1,0 48,0a24,24 0 1,0 -48,0" /></g></svg>
+              <div class="icon--group"></div>
+            </button>
+            
+            <!-- rewind button -->
+            <button class="player__btn player__btn--restart js-restart btn--text">
+              <svg class="player__prev" xmlns="http://www.w3.org/2000/svg" width="15" height="18" viewBox="0 0 15 18"><g fill="none" fill-rule="evenodd" stroke="#FFFFFF" stroke-width="2"><path fill="#FFFFFF" d="M13.88 16.11V1.89L1.866 9z" stroke-linejoin="round"/><path d="M1.867 1.444v15.112" stroke-linecap="round"/></g></svg>
+            </button>
+
+            <!-- next button -->
+            <button class="player__btn player__btn--next js-restart btn--text">
+              <svg version="1.1" class="player__next" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                 width="15px" height="18px" viewBox="0 0 15 18" enable-background="new 0 0 15 18" xml:space="preserve">
+              <g>
+                <path fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" d="M13.88,9L1.866,1.89v14.219L13.88,9z"/>
+                <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" d="M13.879,16.557V1.444"/>
+              </g>
+              </svg>
+            </button>
+            
+            <!-- mute button -->
+            <button class="player__btn player__btn--mute js-mute">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon--mute" width="19" height="18" viewBox="0 0 19 18">
+                <g fill="none" fill-rule="evenodd" stroke="#FFFFFF" stroke-width="2">
+                  <path class="speaker" fill="#FFFFFF" d="M1 5h3.556v8H1V5zm3.556 0L9 1v16l-4.444-4V5z" stroke-linejoin="round"/>
+                  <path class="sound-wave" d="M13 1.25s4.693 2.36 4.693 7.763c0 5.402-4.693 7.763-4.693 7.763" stroke-linecap="round"/>
+                </g>
+              </svg>
+            </button>
+          </div>
+          <div class="player__list">
+            <ul class="player__list--inner"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- soundcloud audio -->
+    <iframe id="sc-iframe" width="10%" height="0" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/215682675&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+    <script>
+      (function() {
+        var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+        function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+        var _buildSoundItem = function(track) {
+          console.log('tracl', track)
+
+          var li = $('<li></li>');
+          var soundItem = $('<div></div>').addClass('sound-item');
+
+          var soundMedia = $('<div></div>').addClass('sound-media');
+          var soundMediaImg = $('<img />').addClass('sound-media-img');
+
+          var soundName = $('<p></p>').text(track.user.username + ' - ' + track.title).addClass('sound-content');
+
+          var soundStats = $('<div></div>').addClass('sound-stats');
+          var soundCount = $('<span></span>').addClass('sound-count');
+
+          soundMediaImg.attr('src', track.artwork_url ? track.artwork_url : track.user.avatar_url);
+          soundCount.text(track.playback_count);
+
+          soundMedia.append(soundMediaImg);
+          soundStats.append(soundCount);
+
+          soundItem.append(soundMedia, [soundName, soundStats]);
+          li.append(soundItem);
+          return li;
+        };
+
+        var Player = function () {
+          function Player() {
+            var _this = this;
+
+            _classCallCheck(this, Player);
+
+            // cache dom
+            this._playBtn = document.querySelector('.player__btn--play');
+            this._muteBtn = document.querySelector('.player__btn--mute');
+            this._nextBtn = document.querySelector('.player__btn--next');
+            this._widget = SC.Widget('sc-iframe');
+            this._progressCirc = document.querySelector('.progress-circle');
+            this._progressLength = this._progressCirc.getTotalLength();
+
+            this._playlist = document.querySelector('.player__list--inner');
+            this._details = document.querySelector('.player__details');
+            this._artist = document.querySelector('.player__artist');
+            this._track = document.querySelector('.player__track');
+            this._image = document.querySelector('.player__image');
+            this._link = document.querySelector('.player__link');
+
+            // set initial state
+            this._totalTime;
+            this._paused = true;
+            this._hasChangedTrack = true;
+            this._muted = false;
+            this._rate = .1;
+            this._trackList = null;
+
+            // bindings
+            ['_init', '_handlePlayBtnClick', '_handleMuteBtnClick', '_next'].forEach(function (fn) {
+              return _this[fn] = _this[fn].bind(_this);
+            });
+          }
+
+          _createClass(Player, [{
+            key: 'load',
+            value: function load() {
+              this._totalTime = this._widget.duration;
+              this._addEventListeners();
+            }
+          }, {
+            key: '_addEventListeners',
+            value: function _addEventListeners() {
+              var _this2 = this;
+
+              this._widget.bind(SC.Widget.Events.READY, function (_) {
+                _this2._widget.bind(SC.Widget.Events.PLAY_PROGRESS, _this2._init);
+                _this2._widget.getSounds(_this2._createPlaylist);
+                _this2._playBtn.addEventListener('click', _this2._handlePlayBtnClick);
+                _this2._muteBtn.addEventListener('click', _this2._handleMuteBtnClick);
+                _this2._nextBtn.addEventListener('click', _this2._next);
+              });
+            }
+          }, {
+            key: '_init',
+            value: function _init(PLAY_PROGRESS) {
+              this._progressCirc.style.strokeDasharray = this._progressLength;
+              this._progressCirc.style.strokeDashoffset = this._progressLength * 2;
+
+              this._progress = PLAY_PROGRESS.relativePosition * 100;
+
+              this._offset = this._progressLength + this._progress * this._progressLength / 100;
+
+              this._progressCirc.style.strokeDashoffset = '' + this._offset;
+            }
+          }, {
+            key: '_handlePlayBtnClick',
+            value: function _handlePlayBtnClick() {
+              this._paused ? this._play() : this._pause();
+            }
+          }, {
+            key: '_handleMuteBtnClick',
+            value: function _handleMuteBtnClick() {
+              this._muted ? this._unmute() : this._mute();
+            }
+          }, {
+            key: '_play',
+            value: function _play() {
+              this._playBtn.classList.remove('paused');
+              this._widget.play();
+              this._paused = false;
+              this._updateInfo();
+            }
+          }, {
+            key: '_pause',
+            value: function _pause() {
+              this._playBtn.classList.add('paused');
+              this._widget.pause();
+              this._paused = true;
+            }
+          }, {
+            key: '_next',
+            value: function _next() {
+              this._playBtn.classList.remove('paused');
+              this._widget.next();
+              this._updateInfo();
+              this._paused = false;
+            }
+          }, {
+            key: '_unmute',
+            value: function _unmute() {
+              this._muteBtn.classList.remove('muted');
+              this._widget.setVolume(1);
+              this._muted = false;
+            }
+          }, {
+            key: '_mute',
+            value: function _mute() {
+              this._muteBtn.classList.add('muted');
+              this._widget.setVolume(0);
+              this._muted = true;
+            }
+          }, {
+            key: '_createPlaylist',
+            value: function _createPlaylist(sounds) {
+              var list = $('.player__list--inner');
+              this._trackList = sounds;
+
+
+              this._trackList.forEach(function(track) {
+                var sound = _buildSoundItem(track);
+                console.log('soundsoundsound', sound);
+                list.append(sound[0]);
+              }, this);
+            }
+          }, {
+            key: '_updateInfo',
+            value: function _updateInfo() {
+              var self = this;
+
+              this._widget.getCurrentSound(function(sound) {
+                var titleArray = sound.title.split('-');
+                self._image.src = sound.artwork_url;
+                self._link.setAttribute('href', sound.permalink_url);
+                self._artist.innerText = titleArray[0];
+                self._track.innerText = titleArray[1];
+              });
+            }
+          }]);
+
+          return Player;
+        }();
+
+        var player = new Player();
+        player.load();
+      })();
+    </script>
+  </body>
+</html>
